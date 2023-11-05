@@ -162,27 +162,27 @@ export default function BodyApp() {
   //   };
   // }, []);
 
-  // useEffect(() => {
-  //   // this will be the epoch
-  //   const targetTime = moment("2024-06-09 15:41");
+  useEffect(() => {
+    // this will be the epoch
+    const targetTime = moment("2023-12-03 15:41");
 
-  //   const interval = setInterval(() => {
-  //     const currentTime = moment();
-  //     const diff = targetTime.diff(currentTime);
-  //     const duration = moment.duration(diff);
-  //     const remaining = Math.max(duration.asMilliseconds(), 0);
+    const interval = setInterval(() => {
+      const currentTime = moment();
+      const diff = targetTime.diff(currentTime);
+      const duration = moment.duration(diff);
+      const remaining = Math.max(duration.asMilliseconds(), 0);
 
-  //     setRemainingTime(remaining);
+      setRemainingTime(remaining);
 
-  //     if (remaining === 0) {
-  //       clearInterval(interval);
-  //     }
-  //   }, 1000);
+      if (remaining === 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
 
-  //   return () => {
-  //     clearInterval(interval);
-  //   };
-  // }, []);
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
 
   const formatTime = (time) => {
     const duration = moment.duration(time);

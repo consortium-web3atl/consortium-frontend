@@ -3,6 +3,11 @@ import React, { useState, useEffect } from "react";
 import moment from "moment";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import { useAccount, useContractWrite, usePrepareContractWrite, useWaitForTransaction } from 'wagmi'
+import { useContractRead } from 'wagmi'
+import abi from "./abi.json";
+import { ethers } from 'ethers';
+
 
 export default function BodyApp() {
   const [number, setNumber] = useState(0);
@@ -12,127 +17,172 @@ export default function BodyApp() {
   const [remainingTime, setRemainingTime] = useState(0);
   const [inputValue, setInputValue] = useState("");
 
-  useEffect(() => {
-    const targetNumber = 4.450077;
-    const duration = 2000;
-    const increment = ((targetNumber - number) / duration) * 10;
+  const { config } = usePrepareContractWrite({
+    addressOrName: "0x6f7dbb5145236a884808934009c6c1cb26fd5aed",
+    contractInterface: abi,
+    functionName: 'enterPool',
+    args: [
+      [0],
+    ],
+  })
 
-    const timer = setInterval(() => {
-      setNumber((prevNumber) => {
-        const newNumber = prevNumber + increment;
-        if (newNumber >= targetNumber) {
-          clearInterval(timer);
-          return targetNumber;
-        }
-        return newNumber;
-      });
-    }, 10);
+  // const fundingGoal = useContractRead({
+  //   addressOrName: props.contractAddress,
+  //   contractInterface: pmp,
+  //   functionName: 'returnFundingGoal',
+  //   args: [projectId],
+  // })
 
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const targetLocked = 7093.358985;
-    const duration = 2000;
-    const increment = ((targetLocked - locked) / duration) * 10;
-
-    const timer = setInterval(() => {
-      setLocked((prevLocked) => {
-        const newLocked = prevLocked + increment;
-        if (newLocked >= targetLocked) {
-          clearInterval(timer);
-          return targetLocked;
-        }
-        return newLocked;
-      });
-    }, 10);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const targetRewards = [2.22, 1.33, 0.89];
-    const duration = 2000;
-    const increment = targetRewards.map(
-      (target, index) => ((target - rewards[index]) / duration) * 10
-    );
-    const timers = [];
-
-    for (let i = 0; i < targetRewards.length; i++) {
-      const timer = setInterval(() => {
-        setRewards((prevRewards) => {
-          const newRewards = [...prevRewards];
-          newRewards[i] += increment[i];
-
-          if (newRewards[i] >= targetRewards[i]) {
-            clearInterval(timer);
-            newRewards[i] = targetRewards[i];
-          }
-
-          return newRewards;
-        });
-      }, 10);
-
-      timers.push(timer);
+  const { data, isLoading, isSuccess, write } = useContractWrite(config)
+  const handleWrite = async () => {
+    if (!write) {
+      console.error('write function is not available');
+      return;
     }
-
-    return () => {
-      timers.forEach((timer) => clearInterval(timer));
-    };
-  }, []);
-
-  useEffect(() => {
-    const targetStatistic = [219, 32.607927, 24];
-    const duration = 2000;
-    const increment = targetStatistic.map(
-      (target, index) => ((target - statistic[index]) / duration) * 10
-    );
-    const timers = [];
-
-    for (let i = 0; i < targetStatistic.length; i++) {
-      const timer = setInterval(() => {
-        setStatistic((prevStatistic) => {
-          const newStatistic = [...prevStatistic];
-          newStatistic[i] += increment[i];
-
-          if (newStatistic[i] >= targetStatistic[i]) {
-            clearInterval(timer);
-            newStatistic[i] = targetStatistic[i];
-          }
-
-          return newStatistic;
-        });
-      }, 10);
-
-      timers.push(timer);
-    }
-
-    return () => {
-      timers.forEach((timer) => clearInterval(timer));
-    };
-  }, []);
-
-  useEffect(() => {
-    // this will be the epoch
-    const targetTime = moment("2024-06-09 15:41");
-
-    const interval = setInterval(() => {
-      const currentTime = moment();
-      const diff = targetTime.diff(currentTime);
-      const duration = moment.duration(diff);
-      const remaining = Math.max(duration.asMilliseconds(), 0);
-
-      setRemainingTime(remaining);
-
-      if (remaining === 0) {
-        clearInterval(interval);
+  
+    try {
+      const tx = await write();
+      console.log('Transaction initiated:', tx);
+  
+      // If you want to wait for the transaction to be mined
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { data, error: waitError } = useWaitForTransaction({
+        hash: tx.hash,
+      });
+  
+      if (waitError) {
+        console.error('Error waiting for transaction:', waitError);
       }
-    }, 1000);
+  
+      if (data) {
+        console.log('Transaction completed:', data);
+      }
+    } catch (writeTxError) {
+      console.error('Error executing write function:', writeTxError);
+    }
+  };
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
+  // useEffect(() => {
+  //   const targetNumber = 4.450077;
+  //   const duration = 2000;
+  //   const increment = ((targetNumber - number) / duration) * 10;
+
+  //   const timer = setInterval(() => {
+  //     setNumber((prevNumber) => {
+  //       const newNumber = prevNumber + increment;
+  //       if (newNumber >= targetNumber) {
+  //         clearInterval(timer);
+  //         return targetNumber;
+  //       }
+  //       return newNumber;
+  //     });
+  //   }, 10);
+
+  //   return () => clearInterval(timer);
+  // }, []);
+
+  // useEffect(() => {
+  //   const targetLocked = 7093.358985;
+  //   const duration = 2000;
+  //   const increment = ((targetLocked - locked) / duration) * 10;
+
+  //   const timer = setInterval(() => {
+  //     setLocked((prevLocked) => {
+  //       const newLocked = prevLocked + increment;
+  //       if (newLocked >= targetLocked) {
+  //         clearInterval(timer);
+  //         return targetLocked;
+  //       }
+  //       return newLocked;
+  //     });
+  //   }, 10);
+
+  //   return () => clearInterval(timer);
+  // }, []);
+
+  // useEffect(() => {
+  //   const targetRewards = [2.22, 1.33, 0.89];
+  //   const duration = 2000;
+  //   const increment = targetRewards.map(
+  //     (target, index) => ((target - rewards[index]) / duration) * 10
+  //   );
+  //   const timers = [];
+
+  //   for (let i = 0; i < targetRewards.length; i++) {
+  //     const timer = setInterval(() => {
+  //       setRewards((prevRewards) => {
+  //         const newRewards = [...prevRewards];
+  //         newRewards[i] += increment[i];
+
+  //         if (newRewards[i] >= targetRewards[i]) {
+  //           clearInterval(timer);
+  //           newRewards[i] = targetRewards[i];
+  //         }
+
+  //         return newRewards;
+  //       });
+  //     }, 10);
+
+  //     timers.push(timer);
+  //   }
+
+  //   return () => {
+  //     timers.forEach((timer) => clearInterval(timer));
+  //   };
+  // }, []);
+
+  // useEffect(() => {
+  //   const targetStatistic = [219, 32.607927, 24];
+  //   const duration = 2000;
+  //   const increment = targetStatistic.map(
+  //     (target, index) => ((target - statistic[index]) / duration) * 10
+  //   );
+  //   const timers = [];
+
+  //   for (let i = 0; i < targetStatistic.length; i++) {
+  //     const timer = setInterval(() => {
+  //       setStatistic((prevStatistic) => {
+  //         const newStatistic = [...prevStatistic];
+  //         newStatistic[i] += increment[i];
+
+  //         if (newStatistic[i] >= targetStatistic[i]) {
+  //           clearInterval(timer);
+  //           newStatistic[i] = targetStatistic[i];
+  //         }
+
+  //         return newStatistic;
+  //       });
+  //     }, 10);
+
+  //     timers.push(timer);
+  //   }
+
+  //   return () => {
+  //     timers.forEach((timer) => clearInterval(timer));
+  //   };
+  // }, []);
+
+  // useEffect(() => {
+  //   // this will be the epoch
+  //   const targetTime = moment("2024-06-09 15:41");
+
+  //   const interval = setInterval(() => {
+  //     const currentTime = moment();
+  //     const diff = targetTime.diff(currentTime);
+  //     const duration = moment.duration(diff);
+  //     const remaining = Math.max(duration.asMilliseconds(), 0);
+
+  //     setRemainingTime(remaining);
+
+  //     if (remaining === 0) {
+  //       clearInterval(interval);
+  //     }
+  //   }, 1000);
+
+  //   return () => {
+  //     clearInterval(interval);
+  //   };
+  // }, []);
 
   const formatTime = (time) => {
     const duration = moment.duration(time);
@@ -187,7 +237,7 @@ export default function BodyApp() {
               </div>
             </div>
             <div className="total">
-              <h4>Total Epics</h4>
+              <h4>Total Epochs</h4>
               <span>{number.toFixed(6)}</span>
             </div>
           </div>
@@ -252,7 +302,7 @@ export default function BodyApp() {
           <div className="rewards">
             <h4>Entrant Cost Is {1} stETH</h4>
             <div className="balance-btns">
-            <button className="deposit">
+            <button className="deposit" onClick={() => write?.()}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
